@@ -1,0 +1,1 @@
+The project that allows you to trigger JS functions from your Python code using RPC on Websockets.
