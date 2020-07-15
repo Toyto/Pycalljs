@@ -5,6 +5,7 @@ from aiohttp import web
 
 routes = web.RouteTableDef()
 
+
 @routes.get('/')
 @aiohttp_jinja2.template('base.html')
 async def handle(request):
@@ -34,7 +35,8 @@ async def websocket_handler(request):
 
 app = web.Application()
 app.add_routes(routes)
-aiohttp_jinja2.setup(app, loader=aiohttp_jinja2.jinja2.FileSystemLoader('templates'))
+aiohttp_jinja2.setup(
+    app, loader=aiohttp_jinja2.jinja2.FileSystemLoader('templates'))
 app['static_root_url'] = '/static'
 app.router.add_static('/static', 'static', name='static')
 
