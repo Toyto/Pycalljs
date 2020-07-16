@@ -14,6 +14,7 @@ socket.onclose = function(event){
 
 socket.onmessage = function(event){
     console.log(event.data)
+    console.log('MESSAGE')
 }
 
-var health_check = window.setInterval(function(){socket.send('Test server')}, 5000);
+// var health_check = window.setInterval(function(){socket.send('Test server')}, 10000);

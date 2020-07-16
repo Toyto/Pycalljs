@@ -18,12 +18,17 @@ async def websocket_handler(request):
     ws = web.WebSocketResponse()
     await ws.prepare(request)
 
+    for _ws in request.app['websockets']:
+        await _ws.send_str('Client joined')
+    request.app['websockets'].append(ws)
+
     async for msg in ws:
+        print(msg)
         if msg.type == aiohttp.WSMsgType.TEXT:
             if msg.data == 'close':
                 await ws.close()
             else:
-                await ws.send_str(msg.data + '/answer')
+                await ws.send_str(msg.data + '/ans')
         elif msg.type == aiohttp.WSMsgType.ERROR:
             print('ws connection closed with exception %s' %
                   ws.exception())
@@ -39,5 +44,12 @@ aiohttp_jinja2.setup(
     app, loader=aiohttp_jinja2.jinja2.FileSystemLoader('templates'))
 app['static_root_url'] = '/static'
 app.router.add_static('/static', 'static', name='static')
+
+async def on_shutdown(app):
+    for ws in app['websockets']:
+        await ws.close(code=1001, message='Server shutdown')
+
+app.on_cleanup.append(on_shutdown)
+app['websockets'] = []
 
 web.run_app(app)
