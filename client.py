@@ -4,6 +4,7 @@ import asyncio
 
 async def call_js(fname, fargs):
     session = aiohttp.ClientSession()
+
     async with session.ws_connect('ws://localhost:8080/ws') as ws:
         func_with_args = '{}({})'.format(fname, ','.join(map(str, fargs)))
         await ws.send_str(func_with_args)
@@ -15,6 +16,7 @@ async def call_js(fname, fargs):
                     break
             elif msg.type == aiohttp.WSMsgType.ERROR:
                 break
+
 
 loop = asyncio.get_event_loop()
 loop.run_until_complete(call_js('Math.max', range(10)))
