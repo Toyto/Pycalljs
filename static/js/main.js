@@ -1,4 +1,5 @@
 var socket = new WebSocket(`ws://${window.location.host}/ws`);
+var result = 0;
 
 socket.onopen = function(){
     console.log('Connection is set.')
@@ -13,9 +14,8 @@ socket.onclose = function(event){
 }
 
 socket.onmessage = async function(event){
-    var result = await eval(event.data)
-    socket.send(result)
-    console.log(result)
+    console.log(event.data)
+    result = await eval(event.data)
 }
 
-// var health_check = window.setInterval(function(){socket.send('Test server')}, 10000);
+var health_check = window.setInterval(function(){socket.send('result: ' + result)}, 5000);

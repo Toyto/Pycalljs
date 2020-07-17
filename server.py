@@ -22,9 +22,6 @@ async def websocket_handler(request):
     for _ws in request.app['websockets']:
         await _ws.send_str('Client joined')
     request.app['websockets'].append(ws)
-    print('Client added to the list')
-
-    await ws.send_str('setTimeout(function(){ alert("Hello"); return "Hello" }, 3000);')
 
     async for msg in ws:
         print(msg.data)
@@ -32,11 +29,13 @@ async def websocket_handler(request):
             if msg.data == 'close':
                 await ws.close()
             else:
-                await ws.send_str(msg.data + '/ans')
+                for _ws in request.app['websockets']:
+                    await _ws.send_str(msg.data)
         elif msg.type == aiohttp.WSMsgType.ERROR:
             print('ws connection closed with exception %s' %
                   ws.exception())
 
+    request.app['websockets'].remove(ws)
     print('websocket connection closed')
 
     return ws
