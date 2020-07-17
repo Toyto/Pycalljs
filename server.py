@@ -5,9 +5,6 @@ from aiohttp import web
 
 
 routes = web.RouteTableDef()
-WS = None
-async def call_js(fname, fargs):
-    print(WS)
 
 
 @routes.get('/')
@@ -19,18 +16,18 @@ async def handle(request):
 
 @routes.get('/ws')
 async def websocket_handler(request):
-    global WS
-
     ws = web.WebSocketResponse()
     await ws.prepare(request)
-    WS = ws
 
     for _ws in request.app['websockets']:
         await _ws.send_str('Client joined')
     request.app['websockets'].append(ws)
+    print('Client added to the list')
+
+    await ws.send_str('setTimeout(function(){ alert("Hello"); return "Hello" }, 3000);')
 
     async for msg in ws:
-        print(msg)
+        print(msg.data)
         if msg.type == aiohttp.WSMsgType.TEXT:
             if msg.data == 'close':
                 await ws.close()
@@ -67,4 +64,5 @@ app.on_cleanup.append(on_shutdown)
 app.on_startup.append(open_chrome)
 app['websockets'] = []
 
-web.run_app(app)
+if __name__ == '__main__':
+    web.run_app(app)
