@@ -8,14 +8,9 @@ async def call_js(fname, fargs):
         func_with_args = '{}({})'.format(fname, ','.join(map(str, fargs)))
         await ws.send_str(func_with_args)
         async for msg in ws:
-            print(msg)
-            if msg.type == aiohttp.WSMsgType.TEXT:
-                if msg.data == 'close cmd':
-                    await ws.close()
-                    break
-            elif msg.type == aiohttp.WSMsgType.ERROR:
-                break
+            if msg.data.startswith('result'):
+                return msg.data
 
 
-loop = asyncio.get_event_loop()
-loop.run_until_complete(call_js('Math.max', range(10)))
+result = asyncio.run(call_js('Math.max', range(10)))
+print(result)
