@@ -1,3 +1,4 @@
+# This client is not needed for an app to work.
 import asyncio
 import aiohttp
 

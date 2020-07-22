@@ -23,14 +23,15 @@ async def websocket_handler(request):
         await _ws.send_str('Client joined')
     request.app['websockets'].append(ws)
 
+    task = request.app.loop.create_task(
+        call_js(ws, fname='Math.max', fargs=[1, 5, 2])
+    )
+
     async for msg in ws:
         print(msg.data)
         if msg.type == aiohttp.WSMsgType.TEXT:
             if msg.data == 'close':
                 await ws.close()
-            else:
-                for _ws in request.app['websockets']:
-                    await _ws.send_str(msg.data)
         elif msg.type == aiohttp.WSMsgType.ERROR:
             print('ws connection closed with exception %s' %
                   ws.exception())
@@ -39,6 +40,15 @@ async def websocket_handler(request):
     print('websocket connection closed')
 
     return ws
+
+
+async def call_js(ws, fname, fargs):
+    func_with_args = '{}({})'.format(fname, ','.join(map(str, fargs)))
+    await ws.send_str(func_with_args)
+    async for msg in ws:
+        if msg.data.startswith('result'):
+            print('result:' + msg.data)
+            return msg.data
 
 
 app = web.Application()
@@ -59,8 +69,12 @@ async def open_chrome(app):
     await asyncio.create_subprocess_shell(cmd)
 
 
+async def on_startup(app):
+    await open_chrome(app)
+
+
 app.on_cleanup.append(on_shutdown)
-app.on_startup.append(open_chrome)
+app.on_startup.append(on_startup)
 app['websockets'] = []
 
 if __name__ == '__main__':
