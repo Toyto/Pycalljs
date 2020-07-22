@@ -16,6 +16,7 @@ socket.onclose = function(event){
 socket.onmessage = async function(event){
     console.log(event.data)
     result = await eval(event.data)
+    socket.send('result: ' + result)
 }
 
-var health_check = window.setInterval(function(){socket.send('result: ' + result)}, 5000);
+// var health_check = window.setInterval(function(){socket.send('result: ' + result)}, 2000);

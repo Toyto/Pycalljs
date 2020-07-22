@@ -23,9 +23,18 @@ async def websocket_handler(request):
         await _ws.send_str('Client joined')
     request.app['websockets'].append(ws)
 
-    task = request.app.loop.create_task(
-        call_js(ws, fname='Math.max', fargs=[1, 5, 2])
-    )
+    js_calls = [
+        call_js(ws, fname='Math.max', fargs=[1, 5, 2]),
+        call_js(ws, fname='Math.min', fargs=[1, 5, 2]),
+        call_js(ws, fname='Math.max', fargs=[1, 5, 2, 50]),
+        call_js(ws, fname='Math.min', fargs=[-1, 23, 33]),
+    ]
+
+    for js_call in js_calls:
+        task = request.app.loop.create_task(js_call)
+        await asyncio.sleep(.5)
+        # Cancel task if not done to prevent concurrent calls to receive().
+        task.cancel()
 
     async for msg in ws:
         print(msg.data)
