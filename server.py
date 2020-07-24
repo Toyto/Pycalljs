@@ -4,6 +4,7 @@ import asyncio
 from aiohttp import web
 
 
+NUMBER_OF_FUNCTIONS = 2
 routes = web.RouteTableDef()
 
 
@@ -22,23 +23,26 @@ async def websocket_handler(request):
     for _ws in request.app['websockets']:
         await _ws.send_str('Client joined')
     request.app['websockets'].append(ws)
-    future = asyncio.Future()
-    asyncio.create_task(socket_reader(ws, request, future))
+    futures = [asyncio.Future() for i in range(NUMBER_OF_FUNCTIONS)]
+    asyncio.create_task(socket_reader(ws, request, futures=futures))
     result = await asyncio.gather(
-        call_js(ws, future, fname='Math.min', fargs=[-1, 23, 33]),
-        call_js(ws, future, fname='Math.max', fargs=[-1, 23, 33]),
+        call_js(ws, futures[0], fname='Math.min', fargs=[-1, 23, 33]),
+        call_js(ws, futures[1], fname='Math.max', fargs=[-1, 23, 33]),
     )
     print(result)
 
     return ws
 
 
-async def socket_reader(ws, request, future):
+async def socket_reader(ws, request, futures):
     async for msg in ws:
         if msg.data == 'close':
             await ws.close()
         elif msg.data.startswith('result'):
-            future.set_result(msg.data)
+            for future in futures:
+                if not future.done():
+                    future.set_result(msg.data)
+                    break
 
     request.app['websockets'].remove(ws)
     print('websocket connection closed')
