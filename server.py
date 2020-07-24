@@ -23,7 +23,7 @@ async def websocket_handler(request):
     for _ws in request.app['websockets']:
         await _ws.send_str('Client joined')
     request.app['websockets'].append(ws)
-    futures = [asyncio.Future() for i in range(NUMBER_OF_FUNCTIONS)]
+    futures = [asyncio.Future() for _ in range(NUMBER_OF_FUNCTIONS)]
     asyncio.create_task(socket_reader(ws, request, futures=futures))
     result = await asyncio.gather(
         call_js(ws, futures[0], fname='Math.min', fargs=[-1, 23, 33]),
