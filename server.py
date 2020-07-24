@@ -51,8 +51,7 @@ async def socket_reader(ws, request, futures):
 async def call_js(ws, future, fname, fargs):
     func_with_args = '{}({})'.format(fname, ','.join(map(str, fargs)))
     await ws.send_str(func_with_args)
-    result = await future
-    return result
+    return await future
 
 
 app = web.Application()
