@@ -23,27 +23,11 @@ async def websocket_handler(request):
         await _ws.send_str('Client joined')
     request.app['websockets'].append(ws)
 
-    js_calls = [
-        call_js(ws, fname='Math.max', fargs=[1, 5, 2]),
-        call_js(ws, fname='Math.min', fargs=[1, 5, 2]),
-        call_js(ws, fname='Math.max', fargs=[1, 5, 2, 50]),
-        call_js(ws, fname='Math.min', fargs=[-1, 23, 33]),
-    ]
-
-    for js_call in js_calls:
-        task = request.app.loop.create_task(js_call)
-        await asyncio.sleep(.5)
-        # Cancel task if not done to prevent concurrent calls to receive().
-        task.cancel()
+    await call_js(ws, fname='Math.min', fargs=[-1, 23, 33])
 
     async for msg in ws:
-        print(msg.data)
-        if msg.type == aiohttp.WSMsgType.TEXT:
-            if msg.data == 'close':
-                await ws.close()
-        elif msg.type == aiohttp.WSMsgType.ERROR:
-            print('ws connection closed with exception %s' %
-                  ws.exception())
+        if msg.data.startswith('result'):
+            print(msg.data)
 
     request.app['websockets'].remove(ws)
     print('websocket connection closed')
@@ -54,10 +38,6 @@ async def websocket_handler(request):
 async def call_js(ws, fname, fargs):
     func_with_args = '{}({})'.format(fname, ','.join(map(str, fargs)))
     await ws.send_str(func_with_args)
-    async for msg in ws:
-        if msg.data.startswith('result'):
-            print('result:' + msg.data)
-            return msg.data
 
 
 app = web.Application()
