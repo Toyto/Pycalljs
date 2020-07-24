@@ -22,26 +22,33 @@ async def websocket_handler(request):
     for _ws in request.app['websockets']:
         await _ws.send_str('Client joined')
     request.app['websockets'].append(ws)
-
-    result = await call_js(ws, fname='Math.min', fargs=[-1, 23, 33])
+    future = asyncio.Future()
+    asyncio.create_task(socket_reader(ws, request, future))
+    result = await asyncio.gather(
+        call_js(ws, future, fname='Math.min', fargs=[-1, 23, 33]),
+        call_js(ws, future, fname='Math.max', fargs=[-1, 23, 33]),
+    )
     print(result)
-
-    async for msg in ws:
-        if msg.data == 'close':
-            await ws.close()
-
-    request.app['websockets'].remove(ws)
-    print('websocket connection closed')
 
     return ws
 
 
-async def call_js(ws, fname, fargs):
+async def socket_reader(ws, request, future):
+    async for msg in ws:
+        if msg.data == 'close':
+            await ws.close()
+        elif msg.data.startswith('result'):
+            future.set_result(msg.data)
+
+    request.app['websockets'].remove(ws)
+    print('websocket connection closed')
+
+
+async def call_js(ws, future, fname, fargs):
     func_with_args = '{}({})'.format(fname, ','.join(map(str, fargs)))
     await ws.send_str(func_with_args)
-    async for msg in ws:
-        if msg.data.startswith('result'):
-            return msg.data
+    result = await future
+    return result
 
 
 app = web.Application()
